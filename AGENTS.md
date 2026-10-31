@@ -1,7 +1,7 @@
 # AGENTS.md — Sistema PCA Açailândia
 
 ## Fonte da verdade
-- A especificação completa está em `docs/PDR.md`. Leia o documento inteiro antes de qualquer tarefa.
+- A especificação completa está em `docs/PDR pca.md`. Leia o documento inteiro antes de qualquer tarefa.
 - Os dados iniciais estão em `docs/dados/`. Não altere esses CSVs.
 
 ## Regras
@@ -14,12 +14,18 @@
 - Datas no fuso America/Sao_Paulo.
 
 ## Comandos (mantenha esta seção atualizada)
-- Instalar: `npm install`
+- Instalar com lockfile: `npm ci`
+- Configurar: copiar `.env.example` para `.env` e preencher as variáveis locais, sem versionar credenciais.
+- Gerar cliente Prisma: `npm run db:generate`
 - Subir banco: `docker compose up -d db`
 - Migrar e popular: `npm run db:migrate && npm run db:seed`
-- Testes: `npm test`
+- Criar primeiro administrador: definir `ADMIN_NOME`, `ADMIN_EMAIL`, `ADMIN_SENHA` e executar `npm run admin:criar` (ver README).
+- Testes com PostgreSQL isolado: `npm test` (requer Docker ou `TEST_DATABASE_URL` dedicado).
 - Lint e tipos: `npm run lint && npm run typecheck`
 - Desenvolvimento: `npm run dev`
+- Build: `npm run build`
+- Aplicação completa em contêiner: `docker compose up -d --build`
+- Produção após build: `npm start`
 
 ## Antes de concluir qualquer tarefa
 1. `npm run lint`, `npm run typecheck` e `npm test` passam sem erro.

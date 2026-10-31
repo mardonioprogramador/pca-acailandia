@@ -1,0 +1,124 @@
+generator client {
+  provider = "prisma-client-js"
+}
+datasource db {
+  provider = "postgresql"
+  url = env("DATABASE_URL")
+}
+enum Perfil {
+  ADMIN
+  ORGAO
+}
+enum TipoOrgao {
+  ADMINISTRACAO_DIRETA
+  AUTARQUIA
+  FUNDO
+  OUTRO
+}
+enum SituacaoExercicio {
+  RASCUNHO
+  ABERTO
+  FECHADO
+  PUBLICADO
+}
+enum SituacaoLista {
+  NAO_INICIADA
+  EM_PREENCHIMENTO
+  ENVIADA
+}
+enum SituacaoObjeto {
+  ATIVO
+  PENDENTE
+  INATIVO
+}
+enum OrigemObjeto {
+  SEED
+  ADMIN
+  MANUAL
+}
+model Orgao {
+  id String @id @default(uuid()) @db.Uuid
+  sigla String @unique
+  nome String
+  tipo TipoOrgao
+  grupoUnificacao String
+  ordem Int
+  ativo Boolean @default(true)
+  usuarios Usuario[]
+  listas ListaOrgao[]
+}
+model Usuario {
+  id String @id @default(uuid()) @db.Uuid
+  nome String
+  email String @unique
+  senhaHash String
+  perfil Perfil
+  orgaoId String? @db.Uuid
+  orgao Orgao? @relation(fields:[orgaoId],references:[id],onDelete:Restrict)
+  ativo Boolean @default(true)
+  trocaSenhaPendente Boolean @default(true)
+  tentativasLogin Int @default(0)
+  bloqueadoAte DateTime? @db.Timestamptz(3)
+  sessoes Sessao[]
+  auditorias Auditoria[]
+  @@index([orgaoId])
+}
+model Exercicio {
+  id String @id @default(uuid()) @db.Uuid
+  ano Int @unique
+  titulo String
+  situacao SituacaoExercicio @default(RASCUNHO)
+  inicioPreenchimento DateTime @db.Timestamptz(3)
+  fimPreenchimento DateTime @db.Timestamptz(3)
+  atoPublicacao String?
+  listas ListaOrgao[]
+}
+model ListaOrgao {
+  id String @id @default(uuid()) @db.Uuid
+  exercicioId String @db.Uuid
+  orgaoId String @db.Uuid
+  situacao SituacaoLista @default(NAO_INICIADA)
+  enviadaEm DateTime? @db.Timestamptz(3)
+  enviadaPor String? @db.Uuid
+  orgao Orgao @relation(fields:[orgaoId],references:[id],onDelete:Restrict)
+  exercicio Exercicio @relation(fields:[exercicioId],references:[id],onDelete:Cascade)
+  @@unique([exercicioId,orgaoId])
+  @@index([orgaoId])
+}
+model ObjetoCatalogo {
+  id String @id @default(uuid()) @db.Uuid
+  codigo String @unique
+  descricao String
+  naturezaPadrao String?
+  modalidadePadrao String
+  elementoDespesa String?
+  siglasExercicioAnterior String[]
+  ordem Int
+  situacao SituacaoObjeto @default(ATIVO)
+  origem OrigemObjeto @default(SEED)
+  @@index([origem,ordem])
+}
+model Sessao {
+  id String @id @default(uuid()) @db.Uuid
+  tokenHash String @unique
+  csrfToken String
+  usuarioId String @db.Uuid
+  usuario Usuario @relation(fields:[usuarioId],references:[id],onDelete:Cascade)
+  criadoEm DateTime @default(now()) @db.Timestamptz(3)
+  expiraEm DateTime @db.Timestamptz(3)
+  @@index([usuarioId])
+  @@index([expiraEm])
+}
+model Auditoria {
+  id String @id @default(uuid()) @db.Uuid
+  usuarioId String? @db.Uuid
+  usuario Usuario? @relation(fields:[usuarioId],references:[id],onDelete:Restrict)
+  entidade String
+  entidadeId String
+  acao String
+  antes Json?
+  depois Json?
+  criadoEm DateTime @default(now()) @db.Timestamptz(3)
+  @@index([entidade,entidadeId])
+  @@index([criadoEm])
+}
